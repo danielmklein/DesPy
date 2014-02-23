@@ -8,61 +8,59 @@ Here goes.
 '''
 
 
-def XOR(bitsA, bitsB):
-	'''
-	Return the exclusive-OR'ed result of two binary strings (1's and 0's).
-	'''
-	if len(bitsA) != len(bitsB):
-		return None
-
-	newBits = ["1"]*len(bitsA)
-	for i in range(len(bitsA)):
-		if bitsA[i] == bitsB[i]:
-			newBits[i] = "0"
-	return "".join(newBits)
+class DESpy():
+	def __init__(self):
+		pass
 
 
-def left_shift(bits, num_shifts=1):
-	
-	oldBits = list(bits)
-	newBits =  [None]*len(bits)
+	def XOR(self, bitsA, bitsB):
+		'''
+		Return the exclusive-OR'ed result of two binary strings (1's and 0's).
+		'''
+		if len(bitsA) != len(bitsB):
+			return None
 
-	for i in range(num_shifts):
-		newBits = [None]*len(bits)
-		for j in range(len(oldBits)):
-			newBits[j-1] = oldBits[j]
-		oldBits = newBits
-
-	newString = "".join(newBits)
-	return newString
+		newBits = ["1"]*len(bitsA)
+		for i in range(len(bitsA)):
+			if bitsA[i] == bitsB[i]:
+				newBits[i] = "0"
+		return "".join(newBits)
+	# end XOR()
 
 
-test1 = "00001111"
-test2 = "11110000"
-test3 = "10101010"
-test4 = "11111111"
-test5 = "1111"
-test6 = "000"
-print "{0} XOR {1} is: {2}".format(test1, test2, XOR(test1, test2)) 
+	def left_shift(self, bits, num_shifts=1):
+		
+		oldBits = list(bits)
+		newBits =  [None]*len(bits)
 
-print "{0} XOR {1} is: {2}".format(test2, test1, XOR(test2, test1)) 
+		for i in range(num_shifts):
+			newBits = [None]*len(bits)
+			for j in range(len(oldBits)):
+				newBits[j-1] = oldBits[j]
+			oldBits = newBits
 
-print "{0} XOR {1} is: {2}".format(test3, test4, XOR(test3, test4)) 
+		newString = "".join(newBits)
+		return newString
+	# end left_shift()
 
-print "{0} XOR {1} is: {2}".format(test5, test6, XOR(test5, test6)) 
 
-print "{0} left shifted one is: {1}".format(test1, left_shift(test1))
+	def encrypt(self, plain_text, key):
+		'''
+		step 1: create 16 subkeys, each 48 bits long
+			(i) permute key using PC-1 table (to 56 bit key)
+			(ii) split into left and right halves (C0 and D0, 28 bits each)
+			(iii) from C0 and D0, create 16 blocks from each using left shifts table
+			(iv) from each CnDn form key Kn by using PC-2 table (48 bits)
+		step 2: encode each 64-bit block of data
+			(i) apply initial permutation by using IP table on 64-bit data
+			(ii) divide IP block into L0 and R0 halves, 32 bits each
+			(iii) iterate 16 times on:
+				Ln = Rn-1
+				Rn = Ln-1 XOR f(Rn-1,Kn)
+				using f function
+			(iv) apply final permutation IP^-1
+		'''
+		pass
+	# end encrypt()
 
-print "{0} left shifted two is: {1}".format(test1, left_shift(test1,2))
-
-print "{0} left shifted 3 is: {1}".format(test1, left_shift(test1,3))
-
-print "{0} left shifted 4 is: {1}".format(test1, left_shift(test1,4))
-
-print "{0} left shifted 5 is: {1}".format(test1, left_shift(test1,5))
-
-print "{0} left shifted 6 is: {1}".format(test1, left_shift(test1,6))
-
-print "{0} left shifted 7 is: {1}".format(test1, left_shift(test1,7))
-
-print "{0} left shifted eight is: {1}".format(test1, left_shift(test1,8))
+# end DESpy class
