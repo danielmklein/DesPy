@@ -69,24 +69,56 @@ class DESpy():
 			blocks.append(next_block)
 			cur_block = next_block
 		return blocks
+	# end create_shifted_blocks()
+
+
+	def permute_key_with_pc2(self, key):
+		if len(key) != 56:
+			raise Exception("Key length must be 56 bits.")
+		for char in key:
+			if char != '0' and char != '1':
+				raise Exception("Key must contain only 0's and 1's.")
+
+		permuted_key = [None]*48
+		for i in range(len(PC2_TABLE)):
+			permuted_key[i] = key[PC2_TABLE[i] - 1]
+		return ''.join(permuted_key)
+	# end permute_key_with_pc2()
+
+
+	def initial_permutation(self, message):
+		if len(message) != 64:
+			raise Exception("Message length must be 64 bits.")
+		for char in message:
+			if char != '0' and char != '1':
+				raise Exception("Message must contain only 0's and 1's.")
+		
+		permuted_message = [None]*64
+		for i in range(len(IP_TABLE)):
+			permuted_message[i] = message[IP_TABLE[i] - 1]
+		return ''.join(permuted_message)	
+	# end initial_permutation()
 
 
 	def encrypt(self, plain_text, key):
 		'''
-		TODO: step 1: create 16 subkeys, each 48 bits long
+		step 1: create 16 subkeys, each 48 bits long
 			(i) permute key using PC-1 table (to 56 bit key) -- DONE
 			(ii) split into left and right halves (C0 and D0, 28 bits each) -- DONE
-			TODO: (iii) from C0 and D0, create 16 blocks from each using left shifts table
-			TODO: (iv) from each CnDn form key Kn by using PC-2 table (48 bits)
+			(iii) from C0 and D0, create 16 blocks from each using left shifts table
+			(iv) from each CnDn form key Kn by using PC-2 table (48 bits)
 		TODO: step 2: encode each 64-bit block of data
-			TODO: (i) apply initial permutation by using IP table on 64-bit data
-			TODO: (ii) divide IP block into L0 and R0 halves, 32 bits each
+			(i) apply initial permutation by using IP table on 64-bit data
+			(ii) divide IP block into L0 and R0 halves, 32 bits each
 			TODO: (iii) iterate 16 times on:
 				Ln = Rn-1
 				Rn = Ln-1 XOR f(Rn-1,Kn)
 				using f function
 			TODO: (iv) apply final permutation IP^-1
 		'''
+		#######################################################################
+		# step 1: create 16 subkeys, each 48 bits long
+		#######################################################################
 		# (i) permute key using PC-1 table (to 56 bit key)
 		permuted_key = permute_key_with_pc1(key)
 		if len(permuted_key) != 56:
@@ -96,7 +128,33 @@ class DESpy():
 		c_zero = permuted_key[0:28]
 		d_zero = permuted_key[28:]
 
-		pass
+		# (iii) from C0 and D0, create 16 blocks from each using left shifts table
+		c_blocks = self.create_shifted_blocks(c_zero)
+		d_blocks = self.create_shifted_blocks(d_zero)
+
+		# (iv) from each CnDn form key Kn by using PC-2 table (48 bits)
+		keys = []
+		for i in range(len(c_blocks)):
+			pair = c_blocks[i] + d_blocks[i]
+			new_key = self.permute_key_with_pc2(pair)
+			keys.append(new_key)
+		#######################################################################
+		# end of step 1
+		#######################################################################
+
+		#######################################################################
+		# step 2: encode each 64-bit block of data
+		#######################################################################
+		# (i) apply initial permutation by using IP table on 64-bit data
+		initial_permutation = self.initial_permutation(plain_text)
+
+		# (ii) divide IP block into L0 and R0 halves, 32 bits each
+		L_zero = initial_permutation[0:28]
+		R_zero = initial_permutation[28:0]
+
+		######################################################################
+		# end of step 2
+		#######################################################################
 	# end encrypt()
 
 # end DESpy class
