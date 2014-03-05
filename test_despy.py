@@ -198,5 +198,73 @@ class TestDespy(unittest.TestCase):
 		self.assertEqual(expected, actual)
 		print "**Finished testing initial permutation of message.**"
 
+
+	def test_e_bit_selection(self):
+		print "**Testing E-bit selection permutation.**"
+		right_block = "11110000101010101111000010101010"
+		expected =  "011110100001010101010101011110100001010101010101"
+		actual = self.despy.e_bit_selection(right_block)
+		print "Expected E-bit permutation: {0}".format(expected)
+		print "Actual E-bit permutation {0}".format(actual)
+		self.assertEqual(expected, actual)
+		print "**Finished testing E-bit selection permutation.**"
+
+
+	def test_feistel(self):
+		print "**Testing Feistel function.**"
+		data = "11110000101010101111000010101010"
+		key = "000110110000001011101111111111000111000001110010"
+		expected = "0010001101001010101010011011"
+		actual = self.despy.feistel(data, key)
+		print "Expected feistel output: {0}".format(expected)
+		print "Actual feistel output: {0}".format(actual)
+		self.assertEqual(expected, actual)
+		print "**Finished testing Feistel function.**"
+
+
+	def test_s_box_selection(self):
+		print "**Testing S box selection.**"
+		inputs = \
+			([ 
+			"011000",
+		 	"010001",
+		 	"011110",
+		 	"111010",
+		 	"100001",
+		 	"100110", 
+		 	"010100",
+		 	"100111"
+		 	])
+		outputs = \
+			([
+			"0101", 
+			"1100", 
+			"1000", 
+			"0010", 
+			"1011", 
+			"0101", 
+			"1001", 
+			"0111"
+			])
+		for i in range(len(inputs)):
+			expected = outputs[i]
+			actual = self.despy.s_box_selection(inputs[i], i+1)
+			print "Expected S bit selection: {0}".format(expected)
+			print "Actual S bit selection: {0}".format(actual)
+			self.assertEqual(expected, actual)
+		print "**Finished testing S box selection.**"
+
+
+	def test_build_s_box_output(self):
+		print "**Testing the building of S box output.**"
+		input = "011000010001011110111010100001100110010100100111"
+		expected = "01011100100000101011010110010111"
+		actual = self.despy.build_s_box_output(input)
+		print "Expected S box output: {0}".format(expected)
+		print "Actual S box output: {0}".format(actual)
+		self.assertEqual(expected, actual)
+		print "**Finished testing building of S box output.**"
+
+
 if __name__ == '__main__':
     unittest.main()

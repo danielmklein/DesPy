@@ -100,6 +100,80 @@ class DESpy():
 	# end initial_permutation()
 
 
+	def e_bit_selection(self, right_block):
+		if len(right_block) != 32:
+			raise Exception("Block length must be 32 bits.")
+		for char in right_block:
+			if char != '0' and char != '1':
+				raise Exception("Block must contain only 0's and 1's.")
+		
+		permuted_block = [None]*48
+		for i in range(len(E_BIT_TABLE)):
+			permuted_block[i] = right_block[E_BIT_TABLE[i] - 1]
+		return ''.join(permuted_block)
+	# end e_bit_selection()
+
+
+	def s_box_selection(self, bits, box_num):
+		if len(bits) != 6:
+			raise Exception("Must use only 6 bits for S box selection.")
+		for char in bits:
+			if char != '0' and char != '1':
+				raise Exception("Bits must contain only 0's and 1's.")
+		s_box = S[box_num]
+		row_bits = bits[0] + bits[5]
+		row = int(row_bits, 2)
+		column_bits = bits[1:5]
+		column = int(column_bits, 2)
+
+		# this is the actual index in the S table list
+		index = (row*16) + (column)
+		# this is cryptic -- this converts the number at the index
+		# position in the given box from an int into a binary string
+		# 4 bits long.
+		value = "{0:04b}".format(s_box[index])
+		return value
+
+
+	def build_s_box_output(self, data):
+		if len(data) != 48:
+			raise Exception("Must use only 6 bits for S box selection.")
+		for char in data:
+			if char != '0' and char != '1':
+				raise Exception("Data must contain only 0's and 1's.")
+		pieces = []
+		pieces.append(data[0:6])
+		pieces.append(data[6:12])
+		pieces.append(data[12:18])
+		pieces.append(data[18:24])
+		pieces.append(data[24:30])
+		pieces.append(data[30:36])
+		pieces.append(data[36:42])
+		pieces.append(data[42:])
+
+		selections = []
+		for i in range(len(pieces)):
+			new_selection = self.s_box_selection(pieces[i], i+1)
+			selections.append(new_selection)
+		return ''.join(selections)
+
+
+	def feistel(self, data, key):
+		'''
+		(1) expand data from 32 to 48 bits using E table
+		(2) calculate Kn XOR E(Rn-1) (key XOR E(data)) -- this yields
+			eight groups of six bits 
+		(3) each group of six bits gives us address in a different S box.
+			First and last bits denote row, middle 4 bits denote column.
+			Get number from that position in certain S box, convert to binary.
+		(4) Finally, concat all the bits from above and perform permutation P.
+
+		So, f(Kn, Rn-1) = P(S1(B1)S2(B2)...S8(B8))
+		'''
+		pass
+	# end feistel
+
+
 	def encrypt(self, plain_text, key):
 		'''
 		step 1: create 16 subkeys, each 48 bits long
