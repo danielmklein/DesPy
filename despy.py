@@ -102,7 +102,8 @@ class DESpy():
 
 	def e_bit_selection(self, right_block):
 		if len(right_block) != 32:
-			raise Exception("Block length must be 32 bits.")
+			raise Exception("Block length must be 32 bits. "
+							"Found length of {0}".format(len(right_block)))
 		for char in right_block:
 			if char != '0' and char != '1':
 				raise Exception("Block must contain only 0's and 1's.")
@@ -133,6 +134,7 @@ class DESpy():
 		# 4 bits long.
 		value = "{0:04b}".format(s_box[index])
 		return value
+	# end s_box_selection()
 
 
 	def build_s_box_output(self, data):
@@ -156,6 +158,21 @@ class DESpy():
 			new_selection = self.s_box_selection(pieces[i], i+1)
 			selections.append(new_selection)
 		return ''.join(selections)
+	# end build_s_box_output()
+
+
+	def p_permutation(self, data):
+		if len(data) != 32:
+			raise Exception("Length of data must be 32 bits.")
+		for char in data:
+			if char != '0' and char != '1':
+				raise Exception("Data must contain only 0's and 1's.")
+		
+		permuted_data = [None]*32
+		for i in range(len(P_TABLE)):
+			permuted_data[i] = data[P_TABLE[i] - 1]
+		return ''.join(permuted_data)
+	# end p_permutation()
 
 
 	def feistel(self, data, key):
@@ -170,8 +187,63 @@ class DESpy():
 
 		So, f(Kn, Rn-1) = P(S1(B1)S2(B2)...S8(B8))
 		'''
-		pass
-	# end feistel
+		e_expansion = self.e_bit_selection(data)
+		xored = self.XOR(key, e_expansion)
+		# insert length check here -- must be 48 bits?
+		s_box_output = self.build_s_box_output(xored)
+		# insert length check here -- must be 32 bits?
+		p_permuted = self.p_permutation(s_box_output)
+		return p_permuted
+	# end feistel()
+
+
+	def iterations(self, L_zero, R_zero, keys):
+		# insert length checks for l_zero and r_zero?
+		# insert check for num keys?
+		'''
+		Ln = Rn-1
+		Rn = Ln-1 xor f(Rn-1, Kn)
+
+		so L1 = R0
+		&& R1 = L0 xor f(R0, K1)
+		'''
+		keys = [None] + keys
+		print "keys {0}".format(keys)
+		print "num keys: {0}".format(len(keys))
+		left_blocks = [None]*17
+		right_blocks = [None]*17
+		left_blocks[0] = L_zero
+		right_blocks[0] = R_zero
+
+		for n in range(1, 17):
+			print "n = {0}".format(n)
+			left_blocks[n] = right_blocks[n-1]
+			print "new left block = {0}".format(left_blocks[n])
+			feistel = self.feistel(right_blocks[n-1], keys[n])
+			print "feistel = {0}".format(feistel)
+			right_blocks[n] = self.XOR(left_blocks[n-1], feistel)
+			print "we do {0}".format(left_blocks[n-1])
+			print "XOR   {0}".format(feistel)
+			print "& get {0}".format(right_blocks[n])
+			print ""
+
+		return (left_blocks[16], right_blocks[16])
+	# end iterations()
+
+
+	def final_permutation(self, data):
+		if len(data) != 64:
+			raise Exception("Length of data must be 64 bits.")
+		for char in data:
+			if char != '0' and char != '1':
+				raise Exception("Data must contain only 0's and 1's.")
+		
+		permuted_data = [None]*64
+		for i in range(len(IP_INVERSE_TABLE)):
+			permuted_data[i] = data[IP_INVERSE_TABLE[i] - 1]
+		return ''.join(permuted_data)
+	# end final_permutation()
+
 
 
 	def encrypt(self, plain_text, key):
@@ -188,13 +260,13 @@ class DESpy():
 				Ln = Rn-1
 				Rn = Ln-1 XOR f(Rn-1,Kn)
 				using f function
-			TODO: (iv) apply final permutation IP^-1
+			TODO: (iv) swap the blocks apply final permutation IP^-1
 		'''
 		#######################################################################
 		# step 1: create 16 subkeys, each 48 bits long
 		#######################################################################
 		# (i) permute key using PC-1 table (to 56 bit key)
-		permuted_key = permute_key_with_pc1(key)
+		permuted_key = self.permute_key_with_pc1(key)
 		if len(permuted_key) != 56:
 			raise Exception("Length of permuted key should be 56 bits.")
 
@@ -223,12 +295,21 @@ class DESpy():
 		initial_permutation = self.initial_permutation(plain_text)
 
 		# (ii) divide IP block into L0 and R0 halves, 32 bits each
-		L_zero = initial_permutation[0:28]
-		R_zero = initial_permutation[28:0]
+		L_zero = initial_permutation[0:32]
+		R_zero = initial_permutation[32:]
 
+		# (iii) iterate 16 times
+		iterated_blocks = self.iterations(L_zero, R_zero, keys)
+		
+		# (iv) swap the blocks and apply final permutation IP^-1
+		swapped_blocks = (iterated_blocks[1], iterated_blocks[0])
+		encrypted_data = self.final_permutation(swapped_blocks[0] 
+												+ swapped_blocks[1])
+		
 		######################################################################
 		# end of step 2
 		#######################################################################
+		return encrypted_data
 	# end encrypt()
 
 # end DESpy class

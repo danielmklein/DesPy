@@ -44,6 +44,26 @@ D_BLOCKS = ([
 			"0101010101100110011110001111"
 			])
 
+K1 = "000110110000001011101111111111000111000001110010"
+K2 = "011110011010111011011001110110111100100111100101"
+K3 = "010101011111110010001010010000101100111110011001"
+K4 = "011100101010110111010110110110110011010100011101"
+K5 = "011111001110110000000111111010110101001110101000"
+K6 = "011000111010010100111110010100000111101100101111"
+K7 = "111011001000010010110111111101100001100010111100"
+K8 = "111101111000101000111010110000010011101111111011"
+K9 = "111000001101101111101011111011011110011110000001"
+K10 = "101100011111001101000111101110100100011001001111"
+K11 = "001000010101111111010011110111101101001110000110"
+K12 = "011101010111000111110101100101000110011111101001"
+K13 = "100101111100010111010001111110101011101001000001"
+K14 = "010111110100001110110111111100101110011100111010"
+K15 = "101111111001000110001101001111010011111100001010"
+K16 = "110010110011110110001011000011100001011111110101"
+
+KEYS = ([K1, K2, K3, K4, K5, K6, K7, K8,
+				K9, K10, K11, K12, K13, K14, K15, K16])
+
 class TestDespy(unittest.TestCase):
 	def setUp(self):
 		self.despy = DESpy()
@@ -159,25 +179,7 @@ class TestDespy(unittest.TestCase):
 
 	def test_permute_key_with_pc2(self):
 		print "**Finished testing key permutation with PC-2 table...**"
-		K1 = "000110110000001011101111111111000111000001110010"
-		K2 = "011110011010111011011001110110111100100111100101"
-		K3 = "010101011111110010001010010000101100111110011001"
-		K4 = "011100101010110111010110110110110011010100011101"
-		K5 = "011111001110110000000111111010110101001110101000"
-		K6 = "011000111010010100111110010100000111101100101111"
-		K7 = "111011001000010010110111111101100001100010111100"
-		K8 = "111101111000101000111010110000010011101111111011"
-		K9 = "111000001101101111101011111011011110011110000001"
-		K10 = "101100011111001101000111101110100100011001001111"
-		K11 = "001000010101111111010011110111101101001110000110"
-		K12 = "011101010111000111110101100101000110011111101001"
-		K13 = "100101111100010111010001111110101011101001000001"
-		K14 = "010111110100001110110111111100101110011100111010"
-		K15 = "101111111001000110001101001111010011111100001010"
-		K16 = "110010110011110110001011000011100001011111110101"
-
-		expected_keys = ([K1, K2, K3, K4, K5, K6, K7, K8,
-						K9, K10, K11, K12, K13, K14, K15, K16])
+		expected_keys = KEYS
 		for i in range(len(C_BLOCKS)):
 			pair = C_BLOCKS[i] + D_BLOCKS[i]
 			expected = expected_keys[i]
@@ -214,7 +216,7 @@ class TestDespy(unittest.TestCase):
 		print "**Testing Feistel function.**"
 		data = "11110000101010101111000010101010"
 		key = "000110110000001011101111111111000111000001110010"
-		expected = "0010001101001010101010011011"
+		expected = "00100011010010101010100110111011"
 		actual = self.despy.feistel(data, key)
 		print "Expected feistel output: {0}".format(expected)
 		print "Actual feistel output: {0}".format(actual)
@@ -264,6 +266,56 @@ class TestDespy(unittest.TestCase):
 		print "Actual S box output: {0}".format(actual)
 		self.assertEqual(expected, actual)
 		print "**Finished testing building of S box output.**"
+
+
+	def test_p_permutatation(self):
+		print "Testing P permutation.***"
+		input = "01011100100000101011010110010111"
+		expected = "00100011010010101010100110111011"
+		actual = self.despy.p_permutation(input)
+		print "Expected P permutation: {0}".format(expected)
+		print "Actual P permutation: {0}".format(actual)
+		self.assertEqual(expected, actual)
+		print "**Finished testing P permutation.**"
+
+
+	def test_iterations(self):
+		print "**Testing 16 iterations.**"
+		L_zero = "11001100000000001100110011111111"
+		R_zero = "11110000101010101111000010101010"
+		keys = KEYS
+		expected = ("01000011010000100011001000110100",
+					"00001010010011001101100110010101")
+		actual = self.despy.iterations(L_zero, R_zero, keys)
+		print "Expected data after iterations is: {0}".format(expected)
+		print "Actual data after iterations is: {0}".format(actual)
+		self.assertEqual(expected, actual)
+		print "**Finished testing 16 iterations.**"
+
+
+	def test_final_permutation(self):
+		print "**Testing final permutation.**"
+		input = "0000101001001100110110011001010101000011010000100011001000110100"
+		expected = "1000010111101000000100110101010000001111000010101011010000000101"
+		actual = self.despy.final_permutation(input)
+		print "Expected final permutation: {0}".format(expected)
+		print "Actual final permutation: {0}".format(actual)
+		self.assertEqual(expected, actual)
+		print "**Finished testing final permutation.**"
+
+
+	def test_encrypt(self):
+		print "**Testing full DES algorithm.**"
+		data = "0000000100100011010001010110011110001001101010111100110111101111"
+		key = "0001001100110100010101110111100110011011101111001101111111110001"
+		expected = "1000010111101000000100110101010000001111000010101011010000000101"
+		actual = self.despy.encrypt(data, key)
+		print "Input data: {0}".format(data)
+		print "Input key: {0}".format(key)
+		print "Expected encrypted data: {0}".format(expected)
+		print "Actual encrypted data: {0}".format(actual)
+		self.assertEqual(expected, actual)
+		print "**Finished testing full DES algorithm.**"
 
 
 if __name__ == '__main__':
